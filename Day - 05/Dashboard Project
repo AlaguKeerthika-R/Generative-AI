@@ -1,0 +1,162 @@
+#Implemented a Simple Dashboard Project in VS Code
+
+import streamlit as st
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+
+# PAGE CONFIGURATION
+st.set_page_config(
+    page_title="Business Dashboard",
+    page_icon="📊",
+    layout="wide"
+)
+
+# DASHBOARD TITLE
+st.title("📊 Business Performance Dashboard")
+st.write("Monitor your business performance and sales activities.")
+st.divider()
+
+# SIDEBAR
+st.sidebar.title("Dashboard Navigation")
+option = st.sidebar.selectbox(
+    "Choose Page",
+    ["Overview", "Sales", "Customers"]
+)
+st.sidebar.divider()
+st.sidebar.subheader("Dashboard Filters")
+region = st.sidebar.multiselect(
+    "Select Region",
+    ["North", "South", "East", "West"],
+    default=["North", "South", "East", "West"]
+)
+category = st.sidebar.multiselect(
+    "Select Category",
+    ["Electronics", "Clothing", "Furniture"],
+    default=["Electronics", "Clothing", "Furniture"]
+)
+
+# SAMPLE DATA
+@st.cache_data
+def load_data():
+    np.random.seed(42)
+    n = 100
+    dates = [
+        datetime.today() - timedelta(days=i)
+        for i in range(n)
+    ]
+    data = {
+        "Date": dates,
+        "Region": np.random.choice(
+            ["North", "South", "East", "West"], n
+        ),
+        "Category": np.random.choice(
+            ["Electronics", "Clothing", "Furniture"], n
+        ),
+        "Sales": np.random.randint(1000, 10000, n),
+        "Profit": np.random.randint(100, 3000, n),
+        "Orders": np.random.randint(1, 20, n)
+    }
+    return pd.DataFrame(data)
+df = load_data()
+
+
+# FILTER DATA
+filtered_df = df[
+    (df["Region"].isin(region)) &
+    (df["Category"].isin(category))
+]
+
+# DASHBOARD PAGE
+if option == "Overview":
+    st.header("Business Overview")
+    # KPI METRICS
+    st.subheader("Key Performance Indicators")
+    col1, col2, col3, col4 = st.columns(4)
+    total_sales = filtered_df["Sales"].sum()
+    total_profit = filtered_df["Profit"].sum()
+    total_orders = filtered_df["Orders"].sum()
+    average_sales = filtered_df["Sales"].mean()
+    col1.metric(
+        "Total Sales",
+        f"₹{total_sales:,.0f}"
+    )
+    col2.metric(
+        "Total Profit",
+        f"₹{total_profit:,.0f}"
+    )
+    col3.metric(
+        "Total Orders",
+        f"{total_orders:,}"
+    )
+    col4.metric(
+        "Average Sales",
+        f"₹{average_sales:,.0f}"
+    )
+    st.divider()
+
+    # REVENUE BY REGION - BAR CHART
+    st.subheader("Sales Performance by Region")
+    region_sales = (
+        filtered_df.groupby("Region")["Sales"]
+        .sum()
+        .reset_index()
+    )
+    st.bar_chart(
+        region_sales,
+        x="Region",
+        y="Sales",
+        use_container_width=True
+    )
+    st.divider()
+
+    # CATEGORY PERFORMANCE
+    st.subheader("Category Performance")
+    category_sales = (
+        filtered_df.groupby("Category")["Sales"]
+        .sum()
+        .reset_index()
+    )
+    col1, col2 = st.columns(2)
+    with col1:
+        st.bar_chart(
+            category_sales,
+            x="Category",
+            y="Sales",
+            use_container_width=True
+        )
+    with col2:
+        st.dataframe(
+            category_sales,
+            use_container_width=True,
+            hide_index=True
+        )
+    st.divider()
+
+    # SALES TREND - LINE CHART
+    st.subheader("Sales Trend Over Time")
+    daily_sales = (
+        filtered_df.groupby("Date")["Sales"]
+        .sum()
+        .reset_index()
+        .sort_values("Date")
+    )
+    st.line_chart(
+        daily_sales,
+        x="Date",
+        y="Sales",
+        use_container_width=True
+    )
+
+# SALES PAGE
+elif option == "Sales":
+    st.header("Sales Analysis")
+    st.dataframe(
+        filtered_df,
+        use_container_width=True
+    )
+
+# CUSTOMERS PAGE
+elif option == "Customers":
+    st.header("Customer Analysis")
+    st.write("Customer analysis section")
