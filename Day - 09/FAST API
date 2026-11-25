@@ -1,0 +1,25 @@
+# FAST API to implement GET,POST,PUT methods
+from fastapi import FastAPI
+
+app = FastAPI()
+
+number = 0
+
+#retrieve the number
+@app.get("/")
+def get_number():
+    return {"number": number}
+
+#add a number as input
+@app.post("/add")
+def add_number(a: int):
+    global number
+    number = a
+    return {"message": "Number added", "number": number}
+
+#update the number
+@app.put("/update")
+def update_number(a: int):
+    global number
+    number = a
+    return {"message": "Number updated", "number": number}
